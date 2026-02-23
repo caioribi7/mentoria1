@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mentoria - Nivelamento</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #f0fdf4; /* Verde bem claro */
+            --card-bg: #ffffff;
+            --primary-color: #22c55e; /* Verde principal */
+            --primary-hover: #16a34a;
+            --text-main: #14532d;
+            --text-muted: #4ade80;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(34, 197, 94, 0.1);
+            width: 100%;
+            max-width: 500px;
+            padding: 40px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Telas */
+        .screen {
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: var(--text-main);
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        input {
+            padding: 12px;
+            border: 2px solid #bbf7d0;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--primary-color);
+        }
+
+        button {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            background-color: var(--primary-color);
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        /* Tela de Tracking */
+        .header-info {
+            text-align: center;
+            padding-bottom: 15px;
+            border-bottom: 2px dashed #bbf7d0;
+        }
+
+        .timer-display {
+            font-size: 36px;
+            font-weight: 800;
+            text-align: center;
+            color: var(--primary-hover);
+            margin: 10px 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-correct {
+            flex: 1;
+            background-color: var(--primary-color);
+        }
+
+        .btn-wrong {
+            flex: 1;
+            background-color: var(--danger);
+        }
+
+        .btn-wrong:hover {
+            background-color: var(--danger-hover);
+        }
+
+        .history-box {
+            background-color: var(--bg-color);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .history-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .history-list {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .history-item {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            animation: scaleIn 0.3s ease;
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0); }
+            to { transform: scale(1); }
+        }
+
+        .item-correct { background-color: var(--primary-color); }
+        .item-wrong { background-color: var(--danger); }
+
+        .progress-text {
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+
+        /* Tela de Celebração */
+        .celebration-icon {
+            font-size: 60px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .stats {
+            background: var(--bg-color);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="screen-setup" class="screen active">
+        <h1>Configurar Nivelamento</h1>
+        
+        <div class="form-group">
+            <label for="assunto">Assunto da Mentoria</label>
+            <input type="text" id="assunto" placeholder="Ex: Matemática Básica, React..." required>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group" style="flex: 1;">
+                <label for="total-questoes">Janela de Questões</label>
+                <input type="number" id="total-questoes" placeholder="Ex: 5" min="1" value="5" required>
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label for="acertos-necessarios">Acertos Necessários</label>
+                <input type="number" id="acertos-necessarios" placeholder="Ex: 4" min="1" value="4" required>
+            </div>
+        </div>
+
+        <button onclick="iniciarNivelamento()">Iniciar Foco e Nivelamento</button>
+    </div>
+
+    <div id="screen-tracking" class="screen">
+        <div class="header-info">
+            <h2 id="display-assunto">Assunto</h2>
+            <p>Meta: Acertar <span id="display-meta"></span> das últimas <span id="display-janela"></span></p>
+        </div>
+
+        <div>
+            <div class="timer-display" id="timer">00:00</div>
+            <p style="text-align: center; font-size: 12px; color: gray;">Tempo de Foco</p>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn-correct" onclick="registrarResposta(true)">✅ Acertou</button>
+            <button class="btn-wrong" onclick="registrarResposta(false)">❌ Errou</button>
+        </div>
+
+        <div class="history-box">
+            <div class="history-title">Últimas Respostas</div>
+            <div class="history-list" id="history-container">
+                </div>
+            <div class="progress-text" id="progress-text">Acertos na janela atual: 0</div>
+        </div>
+    </div>
+
+    <div id="screen-celebration" class="screen">
+        <div class="celebration-icon">🏆</div>
+        <h1>Nivelamento Concluído!</h1>
+        <p style="text-align: center;">Parabéns, você dominou o assunto <strong><span id="celeb-assunto"></span></strong>!</p>
+        
+        <div class="stats">
+            <p><strong>Tempo total de foco:</strong></p>
+            <h2 id="celeb-tempo" style="color: var(--primary-color);">00:00</h2>
+        </div>
+
+        <button onclick="reiniciar()">Fazer Novo Nivelamento</button>
+    </div>
+</div>
+
+<script>
+    // Variáveis Globais
+    let assunto = "";
+    let janelaTamanho = 5;
+    let acertosNecessarios = 4;
+    let historico = [];
+    
+    // Variáveis do Cronômetro
+    let timerInterval;
+    let segundos = 0;
+
+    // Função para trocar de telas
+    function mostrarTela(idTela) {
+        document.querySelectorAll('.screen').forEach(screen => {
+            screen.classList.remove('active');
+        });
+        document.getElementById(idTela).classList.add('active');
+    }
+
+    function iniciarNivelamento() {
+        assunto = document.getElementById('assunto').value;
+        janelaTamanho = parseInt(document.getElementById('total-questoes').value);
+        acertosNecessarios = parseInt(document.getElementById('acertos-necessarios').value);
+
+        if (!assunto || !janelaTamanho || !acertosNecessarios) {
+            alert("Por favor, preencha todos os campos.");
+            return;
+        }
+
+        if (acertosNecessarios > janelaTamanho) {
+            alert("O número de acertos não pode ser maior que o total de questões da janela!");
+            return;
+        }
+
+        // Configurar UI da tela de tracking
+        document.getElementById('display-assunto').innerText = assunto;
+        document.getElementById('display-meta').innerText = acertosNecessarios;
+        document.getElementById('display-janela').innerText = janelaTamanho;
+        
+        // Resetar dados
+        historico = [];
+        segundos = 0;
+        atualizarHistoricoUI();
+        
+        mostrarTela('screen-tracking');
+        iniciarTimer();
+    }
+
+    function iniciarTimer() {
+        clearInterval(timerInterval);
+        atualizarDisplayTimer();
+        timerInterval = setInterval(() => {
+            segundos++;
+            atualizarDisplayTimer();
+        }, 1000);
+    }
+
+    function atualizarDisplayTimer() {
+        const min = Math.floor(segundos / 60).toString().padStart(2, '0');
+        const seg = (segundos % 60).toString().padStart(2, '0');
+        const formato = `${min}:${seg}`;
+        document.getElementById('timer').innerText = formato;
+        document.getElementById('celeb-tempo').innerText = formato;
+    }
+
+    function registrarResposta(acertou) {
+        historico.push(acertou);
+        atualizarHistoricoUI();
+        verificarNivelamento();
+    }
+
+    function atualizarHistoricoUI() {
+        const container = document.getElementById('history-container');
+        container.innerHTML = "";
+
+        // Pegar apenas as últimas respostas baseadas no tamanho da janela
+        const janelaAtual = historico.slice(-janelaTamanho);
+
+        janelaAtual.forEach(acertou => {
+            const div = document.createElement('div');
+            div.className = `history-item ${acertou ? 'item-correct' : 'item-wrong'}`;
+            div.innerText = acertou ? '✓' : '×';
+            container.appendChild(div);
+        });
+
+        const acertosNaJanela = janelaAtual.filter(h => h === true).length;
+        document.getElementById('progress-text').innerText = `Acertos na janela atual: ${acertosNaJanela} de ${acertosNecessarios} necessários`;
+    }
+
+    function verificarNivelamento() {
+        // Só verifica se já respondemos pelo menos o número necessário de acertos
+        if (historico.length >= acertosNecessarios) {
+            const janelaAtual = historico.slice(-janelaTamanho);
+            const acertos = janelaAtual.filter(h => h === true).length;
+
+            if (acertos >= acertosNecessarios) {
+                concluirNivelamento();
+            }
+        }
+    }
+
+    function concluirNivelamento() {
+        clearInterval(timerInterval);
+        document.getElementById('celeb-assunto').innerText = assunto;
+        mostrarTela('screen-celebration');
+        dispararConfetes();
+    }
+
+    function dispararConfetes() {
+        var duration = 3000;
+        var end = Date.now() + duration;
+
+        (function frame() {
+            confetti({
+                particleCount: 5,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 },
+                colors: ['#22c55e', '#ffffff']
+            });
+            confetti({
+                particleCount: 5,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 },
+                colors: ['#22c55e', '#ffffff']
+            });
+
+            if (Date.now() < end) {
+                requestAnimationFrame(frame);
+            }
+        }());
+    }
+
+    function reiniciar() {
+        document.getElementById('assunto').value = '';
+        mostrarTela('screen-setup');
+    }
+</script>
+
+</body>
+</html>
