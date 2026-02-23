@@ -8,9 +8,9 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root {
-            --bg-color: #f0fdf4; /* Verde bem claro */
+            --bg-color: #f0fdf4;
             --card-bg: #ffffff;
-            --primary-color: #22c55e; /* Verde principal */
+            --primary-color: #22c55e;
             --primary-hover: #16a34a;
             --text-main: #14532d;
             --text-muted: #4ade80;
@@ -46,7 +46,6 @@
             position: relative;
         }
 
-        /* Telas */
         .screen {
             display: none;
             flex-direction: column;
@@ -77,11 +76,13 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
+            flex: 1;
         }
 
         .form-row {
             display: flex;
             gap: 15px;
+            width: 100%;
         }
 
         label {
@@ -96,6 +97,7 @@
             font-size: 16px;
             outline: none;
             transition: border-color 0.3s;
+            width: 100%;
         }
 
         input:focus {
@@ -112,6 +114,7 @@
             background-color: var(--primary-color);
             cursor: pointer;
             transition: background-color 0.3s, transform 0.1s;
+            width: 100%;
         }
 
         button:hover {
@@ -122,7 +125,7 @@
             transform: scale(0.98);
         }
 
-        /* Tela de Tracking */
+        /* Tracking Screen */
         .header-info {
             text-align: center;
             padding-bottom: 15px;
@@ -141,21 +144,12 @@
         .action-buttons {
             display: flex;
             gap: 15px;
+            width: 100%;
         }
 
-        .btn-correct {
-            flex: 1;
-            background-color: var(--primary-color);
-        }
-
-        .btn-wrong {
-            flex: 1;
-            background-color: var(--danger);
-        }
-
-        .btn-wrong:hover {
-            background-color: var(--danger-hover);
-        }
+        .btn-correct { background-color: var(--primary-color); }
+        .btn-wrong { background-color: var(--danger); }
+        .btn-wrong:hover { background-color: var(--danger-hover); }
 
         .history-box {
             background-color: var(--bg-color);
@@ -207,7 +201,7 @@
             margin-top: 10px;
         }
 
-        /* Tela de Celebração */
+        /* Celebration Screen */
         .celebration-icon {
             font-size: 60px;
             text-align: center;
@@ -220,6 +214,29 @@
             border-radius: 10px;
             text-align: center;
             margin-bottom: 20px;
+        }
+
+        /* === RESPONSIVIDADE (MOBILE) === */
+        @media (max-width: 480px) {
+            .container {
+                padding: 25px 20px;
+            }
+
+            /* Empilha as caixas de input em telas muito pequenas */
+            .form-row {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            /* Empilha os botões de Acertou/Errou para facilitar o toque */
+            .action-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .timer-display {
+                font-size: 30px;
+            }
         }
     </style>
 </head>
@@ -235,11 +252,11 @@
         </div>
 
         <div class="form-row">
-            <div class="form-group" style="flex: 1;">
+            <div class="form-group">
                 <label for="total-questoes">Janela de Questões</label>
                 <input type="number" id="total-questoes" placeholder="Ex: 5" min="1" value="5" required>
             </div>
-            <div class="form-group" style="flex: 1;">
+            <div class="form-group">
                 <label for="acertos-necessarios">Acertos Necessários</label>
                 <input type="number" id="acertos-necessarios" placeholder="Ex: 4" min="1" value="4" required>
             </div>
@@ -266,8 +283,7 @@
 
         <div class="history-box">
             <div class="history-title">Últimas Respostas</div>
-            <div class="history-list" id="history-container">
-                </div>
+            <div class="history-list" id="history-container"></div>
             <div class="progress-text" id="progress-text">Acertos na janela atual: 0</div>
         </div>
     </div>
@@ -287,17 +303,33 @@
 </div>
 
 <script>
+    // Correção inteligente das caixas de Acertos Necessários x Janela
+    const inputJanela = document.getElementById('total-questoes');
+    const inputAcertos = document.getElementById('acertos-necessarios');
+
+    inputJanela.addEventListener('input', () => {
+        const valJanela = parseInt(inputJanela.value) || 1;
+        inputAcertos.max = valJanela;
+        if(parseInt(inputAcertos.value) > valJanela) {
+            inputAcertos.value = valJanela;
+        }
+    });
+
+    inputAcertos.addEventListener('input', () => {
+        const valJanela = parseInt(inputJanela.value) || 1;
+        if(parseInt(inputAcertos.value) > valJanela) {
+            inputAcertos.value = valJanela;
+        }
+    });
+
     // Variáveis Globais
     let assunto = "";
     let janelaTamanho = 5;
     let acertosNecessarios = 4;
     let historico = [];
-    
-    // Variáveis do Cronômetro
     let timerInterval;
     let segundos = 0;
 
-    // Função para trocar de telas
     function mostrarTela(idTela) {
         document.querySelectorAll('.screen').forEach(screen => {
             screen.classList.remove('active');
@@ -315,17 +347,10 @@
             return;
         }
 
-        if (acertosNecessarios > janelaTamanho) {
-            alert("O número de acertos não pode ser maior que o total de questões da janela!");
-            return;
-        }
-
-        // Configurar UI da tela de tracking
         document.getElementById('display-assunto').innerText = assunto;
         document.getElementById('display-meta').innerText = acertosNecessarios;
         document.getElementById('display-janela').innerText = janelaTamanho;
         
-        // Resetar dados
         historico = [];
         segundos = 0;
         atualizarHistoricoUI();
@@ -361,7 +386,6 @@
         const container = document.getElementById('history-container');
         container.innerHTML = "";
 
-        // Pegar apenas as últimas respostas baseadas no tamanho da janela
         const janelaAtual = historico.slice(-janelaTamanho);
 
         janelaAtual.forEach(acertou => {
@@ -376,13 +400,15 @@
     }
 
     function verificarNivelamento() {
-        // Só verifica se já respondemos pelo menos o número necessário de acertos
         if (historico.length >= acertosNecessarios) {
             const janelaAtual = historico.slice(-janelaTamanho);
             const acertos = janelaAtual.filter(h => h === true).length;
 
             if (acertos >= acertosNecessarios) {
-                concluirNivelamento();
+                // Pequeno delay para o aluno ver a última bolinha verde antes de mudar de tela
+                setTimeout(() => {
+                    concluirNivelamento();
+                }, 300);
             }
         }
     }
@@ -399,24 +425,9 @@
         var end = Date.now() + duration;
 
         (function frame() {
-            confetti({
-                particleCount: 5,
-                angle: 60,
-                spread: 55,
-                origin: { x: 0 },
-                colors: ['#22c55e', '#ffffff']
-            });
-            confetti({
-                particleCount: 5,
-                angle: 120,
-                spread: 55,
-                origin: { x: 1 },
-                colors: ['#22c55e', '#ffffff']
-            });
-
-            if (Date.now() < end) {
-                requestAnimationFrame(frame);
-            }
+            confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#22c55e', '#ffffff'] });
+            confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#22c55e', '#ffffff'] });
+            if (Date.now() < end) requestAnimationFrame(frame);
         }());
     }
 
